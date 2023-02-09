@@ -2653,6 +2653,7 @@ typedef struct {
     Py_ssize_t *indices;    /* one index per result element */
     PyObject *result;       /* most recently returned result tuple */
     Py_ssize_t r;           /* size of result tuple */
+    Py_ssize_t poolsize;    /* size of the input */
     int stopped;            /* set to 1 when the iterator is exhausted */
 } combinationsobject;
 
@@ -2727,6 +2728,16 @@ combinations_dealloc(combinationsobject *co)
         PyMem_Free(co->indices);
     tp->tp_free(co);
     Py_DECREF(tp);
+}
+
+static PyObject *
+combinations_len(combinationsobject *co, PyObject *Py_UNUSED(ignored))
+{
+//    if (o->cnt == -1) {
+//        PyErr_SetString(PyExc_TypeError, "len() of unsized object");
+//        return NULL;
+//    }
+    return PyLong_FromSize_t(6);
 }
 
 static PyObject *
@@ -2901,6 +2912,8 @@ combinations_setstate(combinationsobject *lz, PyObject *state)
     Py_RETURN_NONE;
 }
 
+PyDoc_STRVAR(length_hint_doc, "Private method returning an estimate of len(list(it)).");
+
 static PyMethodDef combinations_methods[] = {
     {"__reduce__",      (PyCFunction)combinations_reduce,      METH_NOARGS,
      reduce_doc},
@@ -2908,6 +2921,8 @@ static PyMethodDef combinations_methods[] = {
      setstate_doc},
     {"__sizeof__",      (PyCFunction)combinations_sizeof,      METH_NOARGS,
      sizeof_doc},
+    {"__length_hint__", (PyCFunction)combinations_len,         METH_NOARGS,
+     length_hint_doc},
     {NULL,              NULL}   /* sentinel */
 };
 
@@ -4454,8 +4469,6 @@ repeat_len(repeatobject *ro, PyObject *Py_UNUSED(ignored))
     }
     return PyLong_FromSize_t(ro->cnt);
 }
-
-PyDoc_STRVAR(length_hint_doc, "Private method returning an estimate of len(list(it)).");
 
 static PyObject *
 repeat_reduce(repeatobject *ro, PyObject *Py_UNUSED(ignored))
