@@ -3048,6 +3048,7 @@ itertools_combinations_with_replacement_impl(PyTypeObject *type,
     co->indices = indices;
     co->result = NULL;
     co->r = r;
+    co->poolsize = 9999;  // TODO implement
     co->stopped = !n && r;
 
     return (PyObject *)co;
@@ -3379,6 +3380,7 @@ itertools_permutations_impl(PyTypeObject *type, PyObject *iterable,
     po->cycles = cycles;
     po->result = NULL;
     po->r = r;
+    po->poolsize = 9999; //TODO actually implement
     po->stopped = r > n ? 1 : 0;
 
     return (PyObject *)po;
