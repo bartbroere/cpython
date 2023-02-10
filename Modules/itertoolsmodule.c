@@ -2751,6 +2751,7 @@ combinations_len(combinationsobject *co, PyObject *Py_UNUSED(ignored))
     if (co->r >= co->poolsize) {
         return PyLong_FromSize_t(0);
     }
+    // TODO should become: factorial(poolsize) // factorial(r) // factorial(poolsize - r)
     return PyLong_FromSize_t(co->r * co->poolsize);
 }
 
@@ -3630,7 +3631,7 @@ static PyMethodDef permutations_methods[] = {
      setstate_doc},
     {"__sizeof__",      (PyCFunction)permutations_sizeof,      METH_NOARGS,
      sizeof_doc},
-    {"__length_hint__", (PyCFunction)permutations_methods,     METH_NOARGS,
+    {"__length_hint__", (PyCFunction)permutations_len,         METH_NOARGS,
     length_hint_doc},
     {NULL,              NULL}   /* sentinel */
 };
