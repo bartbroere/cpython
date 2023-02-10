@@ -2297,6 +2297,7 @@ typedef struct {
     PyObject *pools;        /* tuple of pool tuples */
     Py_ssize_t *indices;    /* one index per pool */
     PyObject *result;       /* most recently returned result tuple */
+    Py_ssize_t productsize; /* size of the input */
     int stopped;            /* set to 1 when the iterator is exhausted */
 } productobject;
 
@@ -2310,6 +2311,7 @@ product_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     PyObject *pools = NULL;
     Py_ssize_t *indices = NULL;
     Py_ssize_t i;
+    Py_ssize_t productsize = 1;
 
     if (kwds != NULL) {
         char *kwlist[] = {"repeat", 0};
@@ -2354,6 +2356,7 @@ product_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     for (i=0; i < nargs ; ++i) {
         PyObject *item = PyTuple_GET_ITEM(args, i);
         PyObject *pool = PySequence_Tuple(item);
+        productsize *= PyObject_Length(pool);
         if (pool == NULL)
             goto error;
         PyTuple_SET_ITEM(pools, i, pool);
@@ -2374,6 +2377,7 @@ product_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     lz->pools = pools;
     lz->indices = indices;
     lz->result = NULL;
+    lz->productsize = productsize;
     lz->stopped = 0;
 
     return (PyObject *)lz;
@@ -2394,6 +2398,14 @@ product_dealloc(productobject *lz)
     if (lz->indices != NULL)
         PyMem_Free(lz->indices);
     Py_TYPE(lz)->tp_free(lz);
+}
+
+PyDoc_STRVAR(length_hint_doc, "Private method returning an estimate of len(list(it)).");
+
+static PyObject *
+product_len(productobject *po, PyObject *Py_UNUSED(ignored))
+{
+    return PyLong_FromSize_t(po->productsize);
 }
 
 static PyObject *
@@ -2583,6 +2595,8 @@ static PyMethodDef product_methods[] = {
      setstate_doc},
     {"__sizeof__",      (PyCFunction)product_sizeof,      METH_NOARGS,
      sizeof_doc},
+    {"__length_hint__", (PyCFunction)product_len,         METH_NOARGS,
+     length_hint_doc},
     {NULL,              NULL}   /* sentinel */
 };
 
@@ -2705,6 +2719,7 @@ itertools_combinations_impl(PyTypeObject *type, PyObject *iterable,
     co->pool = pool;
     co->indices = indices;
     co->result = NULL;
+    co->poolsize = n;
     co->r = r;
     co->stopped = r > n ? 1 : 0;
 
@@ -2733,11 +2748,10 @@ combinations_dealloc(combinationsobject *co)
 static PyObject *
 combinations_len(combinationsobject *co, PyObject *Py_UNUSED(ignored))
 {
-//    if (o->cnt == -1) {
-//        PyErr_SetString(PyExc_TypeError, "len() of unsized object");
-//        return NULL;
-//    }
-    return PyLong_FromSize_t(6);
+    if (co->r >= co->poolsize) {
+        return PyLong_FromSize_t(0);
+    }
+    return PyLong_FromSize_t(co->r * co->poolsize);
 }
 
 static PyObject *
@@ -2911,8 +2925,6 @@ combinations_setstate(combinationsobject *lz, PyObject *state)
     Py_XSETREF(lz->result, result);
     Py_RETURN_NONE;
 }
-
-PyDoc_STRVAR(length_hint_doc, "Private method returning an estimate of len(list(it)).");
 
 static PyMethodDef combinations_methods[] = {
     {"__reduce__",      (PyCFunction)combinations_reduce,      METH_NOARGS,
