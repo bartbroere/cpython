@@ -11,6 +11,15 @@
    by Raymond D. Hettinger <python@rcn.com>
 */
 
+// TODO borrow math.factorial from other module
+long factorial(int n)
+{
+  if (n == 0)
+    return 1;
+  else
+    return(n * factorial(n-1));
+}
+
 typedef struct {
     PyTypeObject *combinations_type;
     PyTypeObject *cwr_type;
@@ -2751,8 +2760,7 @@ combinations_len(combinationsobject *co, PyObject *Py_UNUSED(ignored))
     if (co->r >= co->poolsize) {
         return PyLong_FromSize_t(0);
     }
-    // TODO should become: factorial(poolsize) // factorial(r) // factorial(poolsize - r)
-    return PyLong_FromSize_t(co->r * co->poolsize);
+    return PyLong_FromSize_t(factorial(co->poolsize) / factorial(co->r) / factorial(co->poolsize - co->r));
 }
 
 static PyObject *
@@ -3048,7 +3056,7 @@ itertools_combinations_with_replacement_impl(PyTypeObject *type,
     co->indices = indices;
     co->result = NULL;
     co->r = r;
-    co->poolsize = 9999;  // TODO implement
+    co->poolsize = n;
     co->stopped = !n && r;
 
     return (PyObject *)co;
@@ -3076,8 +3084,7 @@ cwr_dealloc(cwrobject *co)
 static PyObject *
 cwr_len(cwrobject *co, PyObject *Py_UNUSED(ignored))
 {
-    // TODO should become: factorial(poolsize + r - 1) // factorial(r) // factorial(poolsize - 1)
-    return PyLong_FromSize_t(co->r * co->poolsize);
+    return PyLong_FromSize_t(factorial(co->poolsize + co->r - 1) / factorial(co->r) / factorial(co->poolsize - 1));
 }
 
 static PyObject *
@@ -3410,11 +3417,10 @@ permutations_dealloc(permutationsobject *po)
 static PyObject *
 permutations_len(combinationsobject *co, PyObject *Py_UNUSED(ignored))
 {
-    // TODO The number of items returned is n! / (n-r)! when 0 <= r <= n or zero when r > n.
     if (co->r >= co->poolsize) {
         return PyLong_FromSize_t(0);
     }
-    return PyLong_FromSize_t(co->r * co->poolsize);
+    return PyLong_FromSize_t(factorial(co->poolsize) / factorial(co->poolsize - co->r));
 }
 
 static PyObject *
