@@ -3311,6 +3311,7 @@ typedef struct {
     Py_ssize_t *cycles;     /* one rollover counter per element in the result */
     PyObject *result;       /* most recently returned result tuple */
     Py_ssize_t r;           /* size of result tuple */
+    Py_ssize_t poolsize;    /* size of the input */
     int stopped;            /* set to 1 when the iterator is exhausted */
 } permutationsobject;
 
@@ -3403,6 +3404,15 @@ permutations_dealloc(permutationsobject *po)
     PyMem_Free(po->cycles);
     tp->tp_free(po);
     Py_DECREF(tp);
+}
+
+static PyObject *
+permutations_len(combinationsobject *co, PyObject *Py_UNUSED(ignored))
+{
+    if (co->r >= co->poolsize) {
+        return PyLong_FromSize_t(0);
+    }
+    return PyLong_FromSize_t(co->r * co->poolsize);
 }
 
 static PyObject *
@@ -3613,13 +3623,15 @@ permutations_setstate(permutationsobject *po, PyObject *state)
     Py_RETURN_NONE;
 }
 
-static PyMethodDef permuations_methods[] = {
+static PyMethodDef permutations_methods[] = {
     {"__reduce__",      (PyCFunction)permutations_reduce,      METH_NOARGS,
      reduce_doc},
     {"__setstate__",    (PyCFunction)permutations_setstate,    METH_O,
      setstate_doc},
     {"__sizeof__",      (PyCFunction)permutations_sizeof,      METH_NOARGS,
      sizeof_doc},
+    {"__length_hint__", (PyCFunction)permutations_methods,     METH_NOARGS,
+    length_hint_doc},
     {NULL,              NULL}   /* sentinel */
 };
 
@@ -3630,7 +3642,7 @@ static PyType_Slot permutations_slots[] = {
     {Py_tp_traverse, permutations_traverse},
     {Py_tp_iter, PyObject_SelfIter},
     {Py_tp_iternext, permutations_next},
-    {Py_tp_methods, permuations_methods},
+    {Py_tp_methods, permutations_methods},
     {Py_tp_new, itertools_permutations},
     {Py_tp_free, PyObject_GC_Del},
     {0, NULL},
