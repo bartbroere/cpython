@@ -3343,12 +3343,14 @@ itertools_permutations_impl(PyTypeObject *type, PyObject *iterable,
     PyObject *pool = NULL;
     Py_ssize_t *indices = NULL;
     Py_ssize_t *cycles = NULL;
+    Py_ssize_t poolsize;
     Py_ssize_t i;
 
     pool = PySequence_Tuple(iterable);
     if (pool == NULL)
         goto error;
     n = PyTuple_GET_SIZE(pool);
+    poolsize = PyObject_Length(pool);
 
     r = n;
     if (robj != Py_None) {
@@ -3387,7 +3389,7 @@ itertools_permutations_impl(PyTypeObject *type, PyObject *iterable,
     po->cycles = cycles;
     po->result = NULL;
     po->r = r;
-    po->poolsize = 9999; //TODO actually implement
+    po->poolsize = poolsize;
     po->stopped = r > n ? 1 : 0;
 
     return (PyObject *)po;
@@ -3415,12 +3417,12 @@ permutations_dealloc(permutationsobject *po)
 }
 
 static PyObject *
-permutations_len(combinationsobject *co, PyObject *Py_UNUSED(ignored))
+permutations_len(permutationsobject *po, PyObject *Py_UNUSED(ignored))
 {
-    if (co->r >= co->poolsize) {
+    if (po->r > po->poolsize) {
         return PyLong_FromSize_t(0);
     }
-    return PyLong_FromSize_t(factorial(co->poolsize) / factorial(co->poolsize - co->r));
+    return PyLong_FromSize_t(factorial(po->poolsize) / factorial(po->poolsize - po->r));
 }
 
 static PyObject *
