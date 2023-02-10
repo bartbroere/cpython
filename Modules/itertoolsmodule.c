@@ -3410,7 +3410,7 @@ permutations_dealloc(permutationsobject *po)
 static PyObject *
 permutations_len(combinationsobject *co, PyObject *Py_UNUSED(ignored))
 {
-    // TODO not correct yet, just a placeholder
+    // TODO The number of items returned is n! / (n-r)! when 0 <= r <= n or zero when r > n.
     if (co->r >= co->poolsize) {
         return PyLong_FromSize_t(0);
     }
