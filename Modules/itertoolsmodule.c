@@ -3075,9 +3075,7 @@ cwr_dealloc(cwrobject *co)
 static PyObject *
 cwr_len(cwrobject *co, PyObject *Py_UNUSED(ignored))
 {
-    if (co->r >= co->poolsize) {
-        return PyLong_FromSize_t(0);
-    }
+    // TODO should become: factorial(poolsize + r - 1) // factorial(r) // factorial(poolsize - 1)
     return PyLong_FromSize_t(co->r * co->poolsize);
 }
 
@@ -3410,6 +3408,7 @@ permutations_dealloc(permutationsobject *po)
 static PyObject *
 permutations_len(combinationsobject *co, PyObject *Py_UNUSED(ignored))
 {
+    // TODO not correct yet, just a placeholder
     if (co->r >= co->poolsize) {
         return PyLong_FromSize_t(0);
     }
