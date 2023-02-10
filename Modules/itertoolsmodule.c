@@ -2994,6 +2994,7 @@ typedef struct {
     Py_ssize_t *indices;    /* one index per result element */
     PyObject *result;       /* most recently returned result tuple */
     Py_ssize_t r;           /* size of result tuple */
+    Py_ssize_t poolsize;    /* size of the input */
     int stopped;            /* set to 1 when the cwr iterator is exhausted */
 } cwrobject;
 
@@ -3068,6 +3069,15 @@ cwr_dealloc(cwrobject *co)
         PyMem_Free(co->indices);
     tp->tp_free(co);
     Py_DECREF(tp);
+}
+
+static PyObject *
+cwr_len(cwrobject *co, PyObject *Py_UNUSED(ignored))
+{
+    if (co->r >= co->poolsize) {
+        return PyLong_FromSize_t(0);
+    }
+    return PyLong_FromSize_t(co->r * co->poolsize);
 }
 
 static PyObject *
@@ -3239,6 +3249,8 @@ static PyMethodDef cwr_methods[] = {
      setstate_doc},
     {"__sizeof__",      (PyCFunction)cwr_sizeof,      METH_NOARGS,
      sizeof_doc},
+    {"__length_hint__", (PyCFunction)cwr_len,         METH_NOARGS,
+     length_hint_doc},
     {NULL,              NULL}   /* sentinel */
 };
 
