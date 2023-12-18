@@ -700,6 +700,9 @@ class _BaseNetwork(_IPAddressBase):
         for x in range(network, broadcast + 1):
             yield self._address_class(x)
 
+    def __len__(self):
+        return self.num_addresses
+
     def __getitem__(self, n):
         network = int(self.network_address)
         broadcast = int(self.broadcast_address)
